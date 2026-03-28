@@ -61,6 +61,9 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
     } else if (event.alpha !== null) {
       // General fallback
       compassHeading = 360 - event.alpha;
+    } else {
+      // Data is null (device uncalibrated or no sensor)
+      return;
     }
     
     if (compassHeading !== null) {
@@ -71,30 +74,83 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
     }
   }, []);
 
+  const activeSensorRef = React.useRef<any>(null);
+
   const startCompass = () => {
     setCalibrationError(null);
     setIsCalibrating(true);
-    
-    // Request permission (iOS 13+)
-    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-      (DeviceOrientationEvent as any).requestPermission()
-        .then((permissionState: string) => {
-          if (permissionState === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation, true);
-          } else {
-            setCalibrationError('Permission denied. Please allow compass access in your settings.');
+    hasAbsoluteRef.current = false;
+
+    const setupTraditionalListeners = () => {
+      // Request permission (iOS 13+)
+      if (typeof (window as any).DeviceOrientationEvent !== 'undefined' && typeof (window as any).DeviceOrientationEvent.requestPermission === 'function') {
+        ((window as any).DeviceOrientationEvent).requestPermission()
+          .then((permissionState: string) => {
+            if (permissionState === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation, true);
+            } else {
+              setCalibrationError('Permission denied. Please allow compass access in your Safari/Browser settings.');
+              setIsCalibrating(false);
+            }
+          })
+          .catch((err: any) => {
+            setCalibrationError(`Sensor access error: ${err.message || 'Requires HTTPS.'}`);
             setIsCalibrating(false);
+          });
+      } else {
+        // Non-iOS Devices Fallback
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        
+        // Timeout check: if no event gave us a heading after 3 seconds, show warning
+        setTimeout(() => {
+          if (!hasAbsoluteRef.current && isCalibrating) {
+             setCalibrationError('Still waiting for compass data. Try moving your phone in a figure 8.');
           }
-        })
-        .catch(() => {
-          setCalibrationError('Sensor access requires HTTPS.');
+        }, 3000);
+      }
+    };
+
+    // Modern Chrome Android supports Generic Sensor API
+    if ('AbsoluteOrientationSensor' in window) {
+      try {
+        const sensor = new (window as any).AbsoluteOrientationSensor({ frequency: 60, referenceFrame: 'device' });
+        activeSensorRef.current = sensor;
+        
+        sensor.addEventListener('reading', () => {
+          const [x, y, z, w] = sensor.quaternion;
+          // Convert quaternion to heading (yaw)
+          const siny_cosp = 2 * (w * z + x * y);
+          const cosy_cosp = 1 - 2 * (y * y + z * z);
+          let headingAngle = Math.atan2(siny_cosp, cosy_cosp) * (180 / Math.PI);
+          
+          if (headingAngle < 0) headingAngle += 360;
+          headingAngle = 360 - headingAngle; // CCW to CW
+          
+          setHeading(Math.round(headingAngle) % 360);
           setIsCalibrating(false);
+          hasAbsoluteRef.current = true;
+          setCalibrationError(null);
         });
+
+        sensor.addEventListener('error', (event: any) => {
+          if (event.error.name === 'NotAllowedError') {
+            setCalibrationError('Sensor permission denied. Please check Chrome Site Settings.');
+            setIsCalibrating(false);
+          } else if (event.error.name === 'NotReadableError') {
+            setCalibrationError('Sensor is uncalibrated or unavailable. Trying fallback.');
+            setupTraditionalListeners();
+          } else {
+            setupTraditionalListeners();
+          }
+        });
+
+        sensor.start();
+      } catch (err) {
+        setupTraditionalListeners();
+      }
     } else {
-      // Non-iOS Devices
-      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-      // Fallback
-      window.addEventListener('deviceorientation', handleOrientation, true);
+      setupTraditionalListeners();
     }
   };
 
@@ -102,6 +158,9 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
     return () => {
       window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
       window.removeEventListener('deviceorientation', handleOrientation, true);
+      if (activeSensorRef.current) {
+        activeSensorRef.current.stop();
+      }
     };
   }, [handleOrientation]);
 
