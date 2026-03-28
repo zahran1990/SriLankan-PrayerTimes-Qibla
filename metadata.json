@@ -1,0 +1,7 @@
+{
+  "name": "SriLankan PrayerTimes & Qibla",
+  "description": "A meditative prayer dashboard with Qibla finder and spiritual settings.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
