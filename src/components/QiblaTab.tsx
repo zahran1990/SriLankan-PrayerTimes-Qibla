@@ -164,6 +164,14 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
     };
   }, [handleOrientation]);
 
+  // Auto-start compass on mount
+  React.useEffect(() => {
+    // Only auto-start on non-iOS because iOS requires a manual button click gesture
+    if (typeof (window as any).DeviceOrientationEvent === 'undefined' || typeof (window as any).DeviceOrientationEvent.requestPermission !== 'function') {
+      startCompass();
+    }
+  }, []);
+
   // Calculate the relative rotation of the compass based on the live device heading.
   // The compass 'dial' (N/S/E/W) rotates opposite to the heading, and the Kaaba pointer is absolute + relative diff.
   const compassRotation = heading !== null ? -heading : 0;
@@ -181,16 +189,22 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-surface-container-low p-5 rounded-2xl flex flex-col justify-between h-32 shadow-sm">
-          <Compass className="text-primary" size={32} />
-          <div>
-            <p className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Angle</p>
+        <div className="bg-surface-container-low p-5 rounded-2xl flex flex-col justify-between h-32 shadow-sm relative overflow-hidden">
+          <Compass className="text-primary opacity-20 absolute -right-2 -bottom-2" size={80} />
+          <div className="relative z-10">
+            <p className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Qibla</p>
             <p className="text-xl font-headline font-bold text-primary">{qiblaAngle}° {getCompassDirection(qiblaAngle)}</p>
           </div>
+          <div className="relative z-10 mt-2">
+            <p className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Compass</p>
+            <p className={`text-xl font-headline font-bold ${heading !== null ? 'text-secondary' : 'text-error'}`}>
+              {heading !== null ? `${heading}° ${getCompassDirection(heading)}` : 'Wait...'}
+            </p>
+          </div>
         </div>
-        <div className="bg-surface-container-low p-5 rounded-2xl flex flex-col justify-between h-32 shadow-sm">
-          <Navigation className="text-secondary" size={32} />
-          <div>
+        <div className="bg-surface-container-low p-5 rounded-2xl flex flex-col justify-between h-32 shadow-sm relative overflow-hidden">
+          <Navigation className="text-secondary opacity-20 absolute -right-2 -bottom-2" size={80} />
+          <div className="relative z-10">
             <p className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Distance</p>
             <p className="text-xl font-headline font-bold text-primary">{distance.toLocaleString()} km</p>
           </div>
