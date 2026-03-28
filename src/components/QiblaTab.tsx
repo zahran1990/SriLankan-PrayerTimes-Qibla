@@ -22,6 +22,7 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
   const [heading, setHeading] = React.useState<number | null>(null);
   const [calibrationError, setCalibrationError] = React.useState<string | null>(null);
   const [isCalibrating, setIsCalibrating] = React.useState(false);
+  const hasAbsoluteRef = React.useRef(false);
 
   React.useEffect(() => {
     if (location.latitude && location.longitude) {
@@ -46,16 +47,26 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
 
   const handleOrientation = React.useCallback((event: any) => {
     let compassHeading = null;
-    if (event.webkitCompassHeading) {
+    if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
       // iOS
       compassHeading = event.webkitCompassHeading;
-    } else if (event.absolute && event.alpha !== null) {
-      // Android / Standard (alpha is clockwise from North on some, counter-clockwise on others — usually 360 - alpha)
+    } else if (event.type === 'deviceorientationabsolute' && event.alpha !== null) {
+      hasAbsoluteRef.current = true;
+      compassHeading = 360 - event.alpha;
+    } else if (event.type === 'deviceorientation' && event.alpha !== null) {
+      // Fallback: only use relative deviceorientation if we haven't received an absolute event
+      if (!hasAbsoluteRef.current) {
+        compassHeading = 360 - event.alpha;
+      }
+    } else if (event.alpha !== null) {
+      // General fallback
       compassHeading = 360 - event.alpha;
     }
     
     if (compassHeading !== null) {
-      setHeading(Math.round(compassHeading));
+      let normalized = Math.round(compassHeading) % 360;
+      if (normalized < 0) normalized += 360;
+      setHeading(normalized);
       setIsCalibrating(false);
     }
   }, []);
