@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ location, onDetectLocation }) =>
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-md flex justify-between items-center w-full px-6 py-4">
+    <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-md flex justify-between items-center w-full px-6 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4">
       <div 
         onClick={onDetectLocation}
         className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity cursor-pointer"

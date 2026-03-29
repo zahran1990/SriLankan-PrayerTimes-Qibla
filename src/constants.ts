@@ -11,7 +11,6 @@ export const CALCULATION_METHODS = [
   { id: 'Egyptian', name: 'Egyptian General Authority' },
   { id: 'Karachi', name: 'Univ. of Islamic Sciences, Karachi' },
   { id: 'UmmAlQura', name: 'Umm al-Qura University, Makkah' },
-  { id: 'Dubai', name: 'Dubai' },
   { id: 'MoonsightingCommittee', name: 'Moonsighting Committee' },
   { id: 'NorthAmerica', name: 'ISNA (North America)' },
   { id: 'Kuwait', name: 'Kuwait' },

@@ -182,7 +182,7 @@ export const QiblaTab: React.FC<QiblaTabProps> = ({ location }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="space-y-8 pb-32"
+      className="space-y-8 pb-6"
     >
       <div className="space-y-1">
         <h1 className="font-headline text-4xl font-extrabold text-primary tracking-tight">Qibla Finder</h1>

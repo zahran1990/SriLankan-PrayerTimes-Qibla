@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ChevronRight, Palette, Ruler, HelpCircle, Info, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Palette, Ruler, HelpCircle, Info, ShieldCheck, Clock } from 'lucide-react';
 import { NotificationSettings } from '../types';
 import { CALCULATION_METHODS } from '../constants';
 
@@ -27,7 +27,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-8 pb-32"
+      className="space-y-8 pb-6"
     >
       <div className="space-y-1">
         <h1 className="font-headline text-4xl font-extrabold tracking-tight text-primary">Settings</h1>
@@ -63,6 +63,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             >
               Test Notification Sound
             </button>
+          </div>
+        </section>
+
+        <section>
+          <div className="bg-surface-container-low rounded-3xl p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-secondary-container rounded-full flex items-center justify-center text-on-secondary-container">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-primary">24-Hour Format</p>
+                  <p className="text-[11px] text-on-surface-variant mt-0.5">Show times like 14:30 instead of 02:30 PM</p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer ml-2">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={settings.use24HourFormat || false}
+                  onChange={(e) => onUpdateSettings({ ...settings, use24HourFormat: e.target.checked })}
+                />
+                <div className="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+            </div>
           </div>
         </section>
 

@@ -48,7 +48,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-12 pb-32"
+      className="space-y-12 pb-6"
     >
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary to-primary-container p-8 md:p-12 text-on-primary shadow-2xl">

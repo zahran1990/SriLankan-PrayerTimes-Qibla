@@ -38,6 +38,18 @@ export const usePrayerTimes = (
 
     const now = new Date();
 
+    const formatTime = (timeDate: Date) => {
+      const opts: Intl.DateTimeFormatOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: !settings.use24HourFormat
+      };
+      if (location.timezone) {
+        try { opts.timeZone = location.timezone; } catch (e) {}
+      }
+      return timeDate.toLocaleTimeString([], opts);
+    };
+
     // -------------------------------------------------------------------------
     // PATH A: Use official ACJU times (provided by useACJUTimes hook)
     // -------------------------------------------------------------------------
@@ -45,41 +57,41 @@ export const usePrayerTimes = (
       const acjuList: PrayerTime[] = [
         {
           name: 'Fajr',
-          time: acjuTimes.fajr,
+          time: formatTime(parseTimeStr(acjuTimes.fajr)),
           icon: React.createElement(Sunrise, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.fajr),
           hasToggle: true,
         },
         {
           name: 'Sunrise',
-          time: acjuTimes.sunrise,
+          time: formatTime(parseTimeStr(acjuTimes.sunrise)),
           icon: React.createElement(Sun, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.sunrise),
         },
         {
           name: 'Dhuhr',
-          time: acjuTimes.dhuhr,
+          time: formatTime(parseTimeStr(acjuTimes.dhuhr)),
           icon: React.createElement(CloudSun, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.dhuhr),
           hasToggle: true,
         },
         {
           name: 'Asr',
-          time: acjuTimes.asr,
+          time: formatTime(parseTimeStr(acjuTimes.asr)),
           icon: React.createElement(Sun, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.asr),
           hasToggle: true,
         },
         {
           name: 'Maghrib',
-          time: acjuTimes.maghrib,
+          time: formatTime(parseTimeStr(acjuTimes.maghrib)),
           icon: React.createElement(Sunset, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.maghrib),
           hasToggle: true,
         },
         {
           name: 'Isha',
-          time: acjuTimes.isha,
+          time: formatTime(parseTimeStr(acjuTimes.isha)),
           icon: React.createElement(Moon, { size: 24 }),
           rawDate: parseTimeStr(acjuTimes.isha),
           hasToggle: true,
@@ -102,7 +114,7 @@ export const usePrayerTimes = (
         // Past Isha — next is tomorrow's Fajr
         const tomorrowFajr = new Date(parseTimeStr(acjuTimes.fajr));
         tomorrowFajr.setDate(tomorrowFajr.getDate() + 1);
-        nextP = { name: 'Fajr', time: acjuTimes.fajr, icon: React.createElement(Sunrise, { size: 24 }), rawDate: tomorrowFajr };
+        nextP = { name: 'Fajr', time: formatTime(tomorrowFajr), icon: React.createElement(Sunrise, { size: 24 }), rawDate: tomorrowFajr };
         nextT = tomorrowFajr;
       }
 
@@ -126,11 +138,13 @@ export const usePrayerTimes = (
         params.fajrAngle = 18.0;
         params.ishaAngle = 18.0;
         params.madhab = Madhab.Shafi;
-        params.adjustments.fajr = -7;    // adhan runs 7 min late for Fajr (consistent across both months)
-        params.adjustments.dhuhr = 0;    // exact match
-        params.adjustments.asr = 1;      // adhan runs 1 min early (was +2, March-only; +1 is the cross-month avg)
-        params.adjustments.maghrib = 1;  // adhan runs 1 min early (stable across both months)
-        params.adjustments.isha = 0;     // negligible drift — no adjustment needed
+        if (location.country === 'Sri Lanka') {
+          params.adjustments.fajr = -7;    // adhan runs 7 min late for Fajr (consistent across both months)
+          params.adjustments.dhuhr = 0;    // exact match
+          params.adjustments.asr = 1;      // adhan runs 1 min early (was +2, March-only; +1 is the cross-month avg)
+          params.adjustments.maghrib = 1;  // adhan runs 1 min early (stable across both months)
+          params.adjustments.isha = 0;     // negligible drift — no adjustment needed
+        }
         break;
       case 'Egyptian': params = CalculationMethod.Egyptian(); break;
       case 'Karachi': params = CalculationMethod.Karachi(); break;
@@ -143,14 +157,27 @@ export const usePrayerTimes = (
       case 'Singapore': params = CalculationMethod.Singapore(); break;
       case 'Tehran': params = CalculationMethod.Tehran(); break;
       case 'Turkey': params = CalculationMethod.Turkey(); break;
+      case 'MuslimWorldLeague': params = CalculationMethod.MuslimWorldLeague(); break;
       default: params = CalculationMethod.MuslimWorldLeague();
     }
 
     const date = new Date();
+    if (location.timezone) {
+      try {
+        const targetDateString = new Intl.DateTimeFormat('en-US', {
+          timeZone: location.timezone,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric'
+        }).format(new Date());
+        const [month, day, year] = targetDateString.split('/').map(Number);
+        date.setFullYear(year, month - 1, day);
+        date.setHours(12, 0, 0, 0);
+      } catch (e) {
+        console.error('Timezone date conversion error', e);
+      }
+    }
     const prayerTimes = new PrayerTimes(coords, date, params);
-
-    const formatTime = (timeDate: Date) =>
-      timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const currentPrayer = prayerTimes.currentPrayer();
     let next = prayerTimes.nextPrayer();
@@ -189,7 +216,15 @@ export const usePrayerTimes = (
     const checkNotifications = () => {
       if (!prayers.length || !settings.enabled) return;
       const now = new Date();
-      const nowStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const opts: Intl.DateTimeFormatOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: !settings.use24HourFormat
+      };
+      if (location.timezone) {
+        try { opts.timeZone = location.timezone; } catch (e) {}
+      }
+      const nowStr = now.toLocaleTimeString([], opts);
       prayers.forEach(prayer => {
         if (settings.enabled[prayer.name] && prayer.time === nowStr) {
           if (lastNotifiedRef.current !== `${prayer.name}-${nowStr}`) {

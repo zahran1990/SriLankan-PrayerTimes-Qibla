@@ -11,12 +11,14 @@ export interface LocationData {
   error: string | null;
   accuracy: number | null;
   isManual: boolean;
+  timezone?: string;
 }
 
 export interface NotificationSettings {
   enabled: { [key: string]: boolean };
   sound: string;
   method: string;
+  use24HourFormat: boolean;
 }
 
 export interface PrayerTime {

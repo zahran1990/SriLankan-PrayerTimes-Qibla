@@ -29,10 +29,11 @@ export default function App() {
 
   const [notificationSettings, setNotificationSettings] = React.useState<NotificationSettings>(() => {
     const saved = localStorage.getItem('notificationSettings');
-    const defaults = {
+    const defaults: NotificationSettings = {
       enabled: { Fajr: true, Dhuhr: true, Asr: true, Maghrib: true, Isha: true },
       sound: 'makkah',
-      method: 'ACJU'
+      method: 'ACJU',
+      use24HourFormat: false
     };
     if (!saved) return defaults;
     const parsed = JSON.parse(saved);
@@ -42,6 +43,31 @@ export default function App() {
   const { location, handleManualLocation, detectLocation } = useLocation();
   const acju = useACJUTimes(location);
   const { prayers, nextPrayer, playSound } = usePrayerTimes(location, notificationSettings, acju.times);
+
+  // Auto-update calculation method based on country
+  React.useEffect(() => {
+    if (!location.country) return;
+    
+    const country = location.country.toLowerCase();
+    let newMethod = 'MuslimWorldLeague'; // Default fallback
+
+    if (country.includes('sri lanka')) newMethod = 'ACJU';
+    else if (country.includes('qatar')) newMethod = 'Qatar';
+    else if (country.includes('united arab emirates') || country.includes('uae')) newMethod = 'UmmAlQura';
+    else if (country.includes('saudi arabia')) newMethod = 'UmmAlQura';
+    else if (country.includes('egypt')) newMethod = 'Egyptian';
+    else if (country.includes('pakistan')) newMethod = 'Karachi';
+    else if (country.includes('united states') || country.includes('usa') || country.includes('canada')) newMethod = 'NorthAmerica';
+    else if (country.includes('kuwait')) newMethod = 'Kuwait';
+    else if (country.includes('singapore')) newMethod = 'Singapore';
+    else if (country.includes('iran')) newMethod = 'Tehran';
+    else if (country.includes('turkey') || country.includes('türkiye')) newMethod = 'Turkey';
+    
+    setNotificationSettings(prev => {
+      if (prev.method === newMethod) return prev;
+      return { ...prev, method: newMethod };
+    });
+  }, [location.country]);
 
   // Theme Management
   React.useEffect(() => {
@@ -108,10 +134,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen max-w-4xl mx-auto flex flex-col">
+    <div className="min-h-[100dvh] max-w-4xl mx-auto flex flex-col">
       <Header location={location} onDetectLocation={detectLocation} />
       
-      <main className="flex-1 px-6 pt-4">
+      <main className="flex-1 px-6 pt-4 overflow-y-auto no-scrollbar pb-[100px]">
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
             <HomeTab 
@@ -147,7 +173,7 @@ export default function App() {
       />
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-3 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-[0_-4px_40px_rgba(0,0,0,0.04)] border-t border-neutral-100/10">
+      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-[0_-4px_40px_rgba(0,0,0,0.04)] border-t border-neutral-100/10">
         {[
           { id: 'home', icon: <HomeIcon size={20} />, label: 'Home' },
           { id: 'qibla', icon: <Compass size={20} />, label: 'Qibla' },

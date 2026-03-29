@@ -1,4 +1,5 @@
 import React from 'react';
+import tzlookup from 'tz-lookup';
 import { LocationData } from '../types';
 import { DEFAULT_LOCATION } from '../constants';
 
@@ -12,6 +13,9 @@ export const useLocation = () => {
   });
 
   const handleManualLocation = (lat: number, lng: number, city: string, country: string, isManual: boolean) => {
+    let timezone;
+    try { timezone = tzlookup(lat, lng); } catch (e) {}
+    
     setLocation(prev => ({
       ...prev,
       latitude: lat,
@@ -19,6 +23,7 @@ export const useLocation = () => {
       city,
       country,
       isManual,
+      timezone,
       loading: false,
       accuracy: null,
       error: null
@@ -49,12 +54,15 @@ export const useLocation = () => {
           const data = await response.json();
           const city = data.address.city || data.address.town || data.address.village || data.address.suburb || 'Unknown City';
           const country = data.address.country || 'Unknown Country';
+          let timezone;
+          try { timezone = tzlookup(latitude, longitude); } catch (e) {}
 
           setLocation({
             latitude,
             longitude,
             city,
             country,
+            timezone,
             loading: false,
             error: null,
             accuracy,
