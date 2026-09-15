@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home as HomeIcon, Compass, Settings as SettingsIcon } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 
 // Types & Constants
 import { Tab, NotificationSettings } from './types';
@@ -193,6 +194,7 @@ export default function App() {
           </button>
         ))}
       </nav>
+      <Analytics />
     </div>
   );
 }
