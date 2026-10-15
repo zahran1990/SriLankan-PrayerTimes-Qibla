@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home as HomeIcon, Compass, Settings as SettingsIcon } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 
 // Types & Constants
 import { Tab, NotificationSettings } from './types';
@@ -134,7 +135,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] max-w-4xl mx-auto flex flex-col">
+    <>
+      <Analytics />
+      <div className="min-h-[100dvh] max-w-4xl mx-auto flex flex-col">
       <Header location={location} onDetectLocation={detectLocation} />
       
       <main className="flex-1 px-6 pt-4 overflow-y-auto no-scrollbar pb-[100px]">
@@ -194,5 +197,6 @@ export default function App() {
         ))}
       </nav>
     </div>
+    </>
   );
 }
